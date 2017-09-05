@@ -24,6 +24,7 @@
 int MODE = 0;
 long last_mode_change = 0;
 long animation_step = 0;
+int delay_length = 100;
 int leds[] = {12,11,10,9};
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -43,12 +44,13 @@ void loop() {
       marquee_step();
     break;
     case 1:
+      binary_step();
     break;
     case 2:
     break;
   }
   animation_step++;
-  delay(100);
+  delay(delay_length);
 }
 
 void marquee_step(){
@@ -57,6 +59,10 @@ void marquee_step(){
   }else{  
     digitalWrite(leds[animation_step%NUM_LEDS],LOW); 
   }
+}
+
+void binary_step(){
+  
 }
 void change_mode(){
   if(millis() - last_mode_change > DEBOUNCE_TIME){
