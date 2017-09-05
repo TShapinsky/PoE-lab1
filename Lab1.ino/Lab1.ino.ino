@@ -21,7 +21,7 @@
 */
 #define SWITCH_PIN 3
 #define POT_PIN 2
-#define NUM_MODES 5
+#define NUM_MODES 6
 #define DEBOUNCE_TIME 1000
 #define NUM_LEDS 4
 #define NUM_HEADINGS 30
@@ -53,15 +53,18 @@ void loop() {
       off();
     break;
     case 1:
-      marquee_step();
+      blink();
     break;
     case 2:
-      back_and_forth();
+      marquee_step();
     break;
     case 3:
-      binary_step();
+      back_and_forth();
     break;
     case 4:
+      binary_step();
+    break;
+    case 5:
       compass_step();
     break;
   }
@@ -70,8 +73,18 @@ void loop() {
 }
 
 void off(){
-  for(int i = 0; i >  NUM_LEDS; i++){
+  for(int i = 0; i < NUM_LEDS; i++){
     digitalWrite(leds[i], LOW);
+  }
+}
+
+void blink(){
+  for(int i = 0; i < NUM_LEDS; i++){
+    if(animation_step % 2){
+      digitalWrite(leds[i], HIGH);
+    }else{
+      digitalWrite(leds[i], LOW);
+    }
   }
 }
 
