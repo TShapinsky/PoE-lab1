@@ -17,15 +17,17 @@
   by Arturo Guadalupi
 */
 #define SWITCH_PIN 3
-#define NUM_MODES 2
+#define POT_PIN 2
+#define NUM_MODES 5
 #define DEBOUNCE_TIME 1000
-#define NUM_LEDS 3
+#define NUM_LEDS 4
 int MODE = 0;
 long last_mode_change = 0;
 long animation_step = 0;
-int leds[] = {9,10,11};
+int leds[] = {12,11,10,9};
 // the setup function runs once when you press reset or power the board
 void setup() {
+  Serial.begin(9600);
   // initialize digital pin LED_BUILTIN as an output.
   for(int i = 0; i < NUM_LEDS; i++){
     pinMode(leds[i], OUTPUT);
@@ -38,17 +40,24 @@ void setup() {
 void loop() {
   switch(MODE){
     case 0:
-      if(animation_step % 6 > 3){
-        digitalWrite(leds[animation_step%3],HIGH);
-      }else{
-        digitalWrite(leds[animation_step%3],LOW); 
-      }
-      animation_step++;
-      delay(100);
+      marquee_step();
+    break;
+    case 1:
+    break;
+    case 2:
     break;
   }
+  animation_step++;
+  delay(100);
 }
 
+void marquee_step(){
+  if(animation_step % (NUM_LEDS*2) < NUM_LEDS){
+    digitalWrite(leds[animation_step%NUM_LEDS],HIGH);
+  }else{  
+    digitalWrite(leds[animation_step%NUM_LEDS],LOW); 
+  }
+}
 void change_mode(){
   if(millis() - last_mode_change > DEBOUNCE_TIME){
     MODE = (MODE + 1) % NUM_MODES;
