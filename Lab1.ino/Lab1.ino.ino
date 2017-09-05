@@ -1,3 +1,6 @@
+
+#include <Adafruit_Sensor.h>
+#include <Adafruit_HMC5883_U.h>
 /*
   Blink
   Turns on an LED on for one second, then off for one second, repeatedly.
@@ -21,11 +24,16 @@
 #define NUM_MODES 5
 #define DEBOUNCE_TIME 1000
 #define NUM_LEDS 4
-int MODE = 0;
+#define NUM_HEADINGS 20
+int MODE = 2;
 long last_mode_change = 0;
 long animation_step = 0;
 int delay_length = 100;
 int leds[] = {12,11,10,9};
+/* Assign a unique ID to this sensor at the same time */
+Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12345);
+
+float headings[NUM_HEADINGS];
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(9600);
@@ -35,6 +43,7 @@ void setup() {
   }
   pinMode(SWITCH_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SWITCH_PIN), change_mode, FALLING);
+  mag.begin();
 }
 
 // the loop function runs over and over again forever
@@ -62,7 +71,51 @@ void marquee_step(){
 }
 
 void binary_step(){
-  
+  int val = animation_step%(1<<NUM_LEDS);
+  for(int i =0; i < NUM_LEDS; i++){
+    if(val&(1<<i)){
+      digitalWrite(leds[i],HIGH);
+    }else{
+      digitalWrite(leds[i],LOW);
+    }
+  }
+}
+
+void compass_step(){
+  /* Get a new sensor event */ 
+  sensors_event_t event; 
+  mag.getEvent(&event);
+  float heading = atan2(event.magnetic.y, event.magnetic.x);  
+  // Correct for when signs are reversed.
+  if(heading < 0)
+    heading += 2*PI;
+    
+  // Check for wrap due to addition of declination.
+  if(heading > 2*PI)
+    heading -= 2*PI;
+   
+  // Convert radians to degrees for readability.
+  float headingDegrees = heading * 180/M_PI;
+  headings[animation_step%NUM_HEADINGS] = headingDegrees;
+  float led_hdg_step = 90/NUM_LEDS;
+  float avg = get_avg_mag();//led_hdg_step*(animation_step%NUM_LEDS)//
+  for(int i = 0; i < NUM_LEDS; i++){
+    float led_hdg = 45-led_hdg_step/2 - i*led_hdg_step + avg;
+    Serial.println(led_hdg);
+    if(abs(headingDegrees-led_hdg)*2 < led_hdg_step*1.5){
+      digitalWrite(leds[i], HIGH);
+    }else{
+      digitalWrite(leds[i], LOW);
+    }
+  }
+}
+
+float get_avg_mag(){
+  double tot = 0;
+  for(int i = 0; i < NUM_HEADINGS; i++){
+    tot += headings[i];
+  }
+  return tot/NUM_HEADINGS;
 }
 void change_mode(){
   if(millis() - last_mode_change > DEBOUNCE_TIME){
